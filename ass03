@@ -1,0 +1,305 @@
+%!Tex Program = xelatex
+%\documentclass[a4paper]{article}
+\documentclass[a4paper]{ctexart}
+\usepackage{xltxtra}
+\usepackage{listings}
+%\setmainfont[Mapping=tex-text]{AR PL UMing CN:style=Light}
+%\setmainfont[Mapping=tex-text]{AR PL UKai CN:style=Book}
+%\setmainfont[Mapping=tex-text]{WenQuanYi Zen Hei:style=Regular}
+%\setmainfont[Mapping=tex-text]{WenQuanYi Zen Hei Sharp:style=Regular}
+%\setmainfont[Mapping=tex-text]{AR PL KaitiM GB:style=Regular} 
+%\setmainfont[Mapping=tex-text]{AR PL SungtiL GB:style=Regular} 
+%\setmainfont[Mapping=tex-text]{WenQuanYi Zen Hei Mono:style=Regular} 
+
+
+\title{第三讲：Linux 环境和 Shell 编程}
+\date{}
+\begin{document}
+\maketitle
+\pagestyle{empty}
+
+\section{重定向、管道}
+\begin{lstlisting}[language=sh]
+ls -l > output.txt
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+kill -HUP 1234
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+bash: kill: (1234) - No such process
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+kill -HUP 1234 > output.txt
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+kill -HUP 1234 2> output.txt
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+kill -HUP 1234 >killout.txt 2>&1
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+kill -l 1234 2>/dev/null
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+ls ~ -lR > output.txt
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+more < output.txt
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+ls ~ -lR | more
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+ls ~ -lR | grep usr
+\end{lstlisting}
+
+\section{循环过程}
+\begin{lstlisting}[language=sh]
+for file in *
+do
+if grep -l figure $file
+then
+ls $file -l
+fi
+done
+\end{lstlisting}
+这里
+\begin{lstlisting}[language=sh]
+for file in *
+do
+...something...
+done
+\end{lstlisting}
+\verb|...something...| 
+\begin{lstlisting}[language=sh]
+for fAd in *
+do
+echo $fAd
+done
+\end{lstlisting}
+\section{分支过程}
+然后看内层是一个分支结构：
+\begin{lstlisting}[language=sh]
+if [ ...condition... ]
+then
+...do something...
+fi
+\end{lstlisting}
+\verb|...condition...|，类似 C 语言，只要 \verb|...condition...| 部分不为空，
+\begin{lstlisting}[language=sh]
+if grep -l figure $file
+then
+ls $file -l
+fi
+\end{lstlisting}
+只要
+\begin{lstlisting}[language=sh]
+grep -l figure $file
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+for file in *
+do
+if grep -l figure $file
+then
+cp $file ~/Documents
+fi
+done
+\end{lstlisting}
+
+\section{通配符（wildcard expansion）}
+\item \verb|?|，任一单个字符，比如：\verb|lec0?|，那么
+  \verb|lec01|，\verb|lec02| 和 \verb|lec0k| 都匹配；
+\verb|[]|，括号中任一字母。比如：\verb|lec0[abc]|，那么
+\verb|lec0a|，\verb|lec0b| 和 \verb|lec0c| 都匹配；
+\item \verb|[^]| 或 \verb|[!]|, 不含括号内的任一字符，比如：\verb|lec0[!12]|，
+  那么 \verb|lec01| 和 \verb|lec02| 都不匹配；
+\item \verb|{}|，包含大括号内任一字串，比如：\verb|lec03{.log,.pdf}| 则匹配
+  \verb|lec03.pdf| 或 \verb|lec03.log|。
+\end{itemize}
+\begin{lstlisting}[language=sh]
+grep -l crazyfish *
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+ls -l $(grep -l crazyfish *)
+\end{lstlisting}
+
+\section{脚本代码 (script)}
+
+\begin{lstlisting}[language=sh]
+#!/bin/sh
+# first
+# This file looks through all the files in the current
+# directory for the string POSIX, and then prints the names of
+# those files to the standard output.
+for file in *
+do
+if grep -q crazyfish $file 
+then
+echo $file 
+fi
+done
+exit 0
+\end{lstlisting}
+
+\section{变量}
+
+\begin{lstlisting}[language=sh]
+salutation=Hello
+echo $salutation
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+salutation="Yes Dear"
+echo $salutation
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+salutation=7+5
+echo $salutation
+\end{lstlisting}
+\begin{lstlisting}[language=sh]
+read salutation
+echo $salutation
+\end{lstlisting}
+
+\begin{lstlisting}[language=sh]
+#!/bin/sh
+myvar="Hi there"
+echo $myvar
+echo "$myvar"
+echo '$myvar'
+echo \$myvar
+echo Enter some text
+read myvar
+echo '$myvar' now equals $myvar
+exit 0
+\end{lstlisting}
+(参见：example/scripts/quoting.sh)
+
+\section{环境变量}
+
+\begin{itemize}
+\item \verb|$HOME|，用户目录；
+\item \verb|$PATH|，执行程序的路径，放在这些路径下的可执行文件能够直接被运行；
+\item \verb|$PS1|，命令行提示符，普通用户是 \verb|$|，超级用户是 \verb|#|；
+\item \verb|$PS2|，第二提示符，比如等待输入状态，通常是 \verb|>|；
+\item \verb|$IFS|，输入参数的间隔符，一般是一个空格，也可以是 TAB 或换行；
+\end{itemize}
+以上都可以用 \verb|echo| 输出查看。但是
+\begin{lstlisting}[language=sh]
+echo $PS1
+\end{lstlisting}
+会得到
+\begin{lstlisting}[language=sh]
+${debian_chroot:+($debian_chroot)}\u@\h:\w\$
+\end{lstlisting}
+\begin{itemize}
+\item \verb|$0|，脚本名；
+\item \verb|$#|，传递给脚本的参数个数；
+\item \verb|$$|，脚本的进程编号；
+\item \verb|$1|，\verb|$2|，...，传递给脚本的第 1 个，第 2 个参数，...；
+\item \verb|$*|，传递给脚本的全部参数，作为一个字符串；
+\item \verb|$@|，传递给脚本的全部参数，有几个参数就是几个字符串；
+\end{itemize}
+测试脚本(try\_var.sh)
+\begin{lstlisting}[language=sh]
+#!/bin/bash
+
+echo “The program $0 is now running”
+echo “The first parameter was $1”
+echo “The second parameter was $2”
+echo “The third parameter was $3”
+echo “The all parameters were $*“
+
+echo “The parameter list was:“
+for para in $@
+do
+echo $para
+done
+
+exit 0
+\end{lstlisting}
+
+\section{判断条件（condition）}
+
+实际上，正经的 \verb|if| 后面应该跟一个条件判断，条件的写法是：
+\begin{lstlisting}[language=sh]
+if ...condition...
+\end{lstlisting}
+这里 \verb|...condition...| 的有两种表达，\verb|test| 或者 \verb|[  ]|，
+
+\begin{table}[p!]
+\caption{字符串逻辑运算关系表}
+\centering
+\begin{tabular}{|c|c|}
+\hline
+字符串比较 & 结果 \\
+\hline
+string1 = string2 & True 如果字符串相等 \\
+\hline
+string1 != string2 & True 如果字符串不想等 \\
+\hline
+-n string & True 如果字符串非空 \\
+\hline
+-z string & True 如果字符串空 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[p!]
+  
+\caption{算术逻辑运算关系表}
+\centering
+\begin{tabular}{|c|c|}
+\hline
+算术表达式 & 结果 \\
+\hline
+expression1 -eq expression2 & True 如果表达式值相等\\
+\hline
+expression1 -ne expression2 & True 如果表达式值不想等\\
+\hline
+expression1 -gt expression2 & True 如果 expression1 大于 expression2\\
+\hline
+expression1 -ge expression2 & True 如果 expression1 大于等于 expression2\\
+\hline
+expression1 -lt expression2 & True 如果 expression1 小于 expression2\\
+\hline
+expression1 -le expression2 & True 如果 expression1 小于等于 expression2\\
+\hline
+! expression & True 如果 expression false, 或反之\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[p!]
+  \caption{文件逻辑运算关系表}
+\centering
+\begin{tabular}{|c|c|}
+\hline
+文件判断 & 结果 \\
+\hline
+-d file & True 如果 file 是目录\\
+\hline
+-e file & True 如果 file 存在\\
+\hline
+-f file & True 如果 file 是正经的文件\\
+\hline
+-g file & True 如果 file 设置了 group id\\
+\hline
+-r file & True 如果 file 可读\\
+\hline
+-s file & True 如果 file 大小不是零\\
+\hline
+-u file & True 如果 file 设置了 user id\\
+\hline
+-w file & True 如果 file 可写\\
+\hline
+-x file & True 如果 file 可执行\\
+\hline
+\end{tabular}
+\end{table}
+
+
+
+\bibliographystyle{plain}
+\bibliography{crazyfish.bib}
+
+\end{document}
